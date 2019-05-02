@@ -14,25 +14,26 @@
     <meta name = "author" content = "Kevin Tran">
 </head>
 <body>
-    <div class="lds-dual-ring center display-none"></div>
-    <main>
+    <div id = "app-loader" class="lds-dual-ring center"></div>
+    <main hidden>
         <button id = "open-menu-btn" class = "ripple">
             <img class = "icon-sm-28"
                 src = "./assets/images/icons/menu.png"
             alt = "">
         </button>
         <section id = "current-weather-day-container">
-            <h1 class = "location-label">Fairfield</h1>
+            <h1 class = "location-label"></h1>
             <div class = "flex-container" 
             id = "temperature-summary-container">
                 <div>
                     <img src = 
                     "./assets/images/summary-icons/clear-day-white.png" 
-                    alt = "">
+                    alt = ""
+                    id = "currentlyIcon">
                 </div>
                 <div>
-                    <h1 id = "degrees-label">20&#176;</h1>
-                    <p id = "summary-label">Clear Day</p>
+                    <h1 id = "degrees-label"></h1>
+                    <p id = "summary-label"></p>
                 </div>
                 <div class = "flex-container" 
                 id = "humidity-wind-container">
@@ -40,12 +41,12 @@
                         <img class = "icon-sm-30"
                         src = "./assets/images/icons/humidity.png" 
                         alt = "">
-                    <span>20%</span>
+                    <span id = "humidity-label"></span>
                     </div>
                     <div>
-                        <img class = "icon-sm-30"
+                        <img class = "ic1on-sm-30"
                         src = "./assets/images/icons/wind-speed-flag.png" alt = "">
-                        <span>3 m/h</span>
+                        <span id = "wind-speed-label"></span>
                     </div>
                 </div>
             </div>
@@ -58,7 +59,7 @@
             </button>
             <div id = "daily-weather-wrapper" 
                 class = "lower-panel-body">
-                    <div class = "flex-container weather-box current-day-of-the-week">
+                    <div class = "flex-container weather-box display-none">
                         <div>
                             <h1>Sunday</h1>
                         </div>
@@ -75,8 +76,8 @@
                     </div>
             </div>
             <div id = "hourly-weather-wrapper" 
-                class = "lower-panel-body">
-                    <div class = "flex-container weather-box current-day-of-the-week">
+                class = "lower-panel-body" visible = "false">
+                    <div class = "flex-container weather-box display-none">
                         <div>
                             <h1>14:00</h1>
                         </div>
@@ -106,12 +107,12 @@
                     <button class = "ripple" disabled id = "add-city-btn"disabled>
                         Add City
                     </button>
-                    <h1 class = "location-label">Fairfield</h1>
+                    <h1 class = "location-label"></h1>
                 </div>
                 <div id = "saved-cities-wrapper">
                     <div class = "flex-container saved-city-box">
                         <div class = "ripple">
-                            <h1>Fairfield</h1>
+                            <h1></h1>
                         </div>
                         <div>
                             <button class = "ripple removed-saved-city">
@@ -123,6 +124,7 @@
             </div>
         </section>
     </main>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="./scripts/index.js"></script>
 </body>
 </html>
