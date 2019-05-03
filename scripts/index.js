@@ -12,7 +12,7 @@ const UI = (function() {
     };
 
     const _showMenu = () => menu.style.right = 0;
-    const _hideMenu = () => menu.style.right = '-65%';
+    const _hideMenu = () => menu.style.right = '-' + Math.round(menu.offsetWidth / window.innerWidth * 100) + '%'
     const _toggleHourlyWeather = () => {
         let hourlyWeather = document.querySelector("#hourly-weather-wrapper"),
             arrow = document.querySelector("#toggle-hourly-weather").children[0],
@@ -35,6 +35,12 @@ const UI = (function() {
         }
     };
 
+    const noCityFoundAlert = () => {
+        let alert = document.querySelector("#alert-city-not-found");
+        alert.style.bottom = '20px';
+        setTimeout(() => {alert.style.bottom = '-50px'}, 2000)
+    }
+
     const drawWeatherData = (data, location) => {
         let currentlyData = data.currently,
             dailyData = data.daily.data,
@@ -53,7 +59,7 @@ const UI = (function() {
             e.innerHTML = location;
         });
         document.querySelector('main').style.backgroundImage = `url("./assets/images/bg-images/${currentlyData.icon}.jpg")`;
-        document.querySelector("#currentlyIcon").setAttribute('src',`./assets/images/summary-icons${currentlyData.icon}-white.png`);
+        document.querySelector("#currentlyIcon").setAttribute('src', `./assets/images/summary-icons/${currentlyData.icon}-white.png`);
         document.querySelector("#summary-label").innerHTML = currentlyData.summary;
         document.querySelector("#degrees-label").innerHTML = Math.round((currentlyData.temperature - 32) * 5 / 9) + '&#176';
         document.querySelector("#humidity-label").innerHTML = Math.round(currentlyData.humidity * 100) + '%';
@@ -106,11 +112,92 @@ const UI = (function() {
     return {
         showApp,
         loadApp,
-        drawWeatherData
+        drawWeatherData,
+        noCityFoundAlert
     }
 })();
 
-const GETLOCATION = (function (){
+const LOCALSTORAGE = (function () {
+    let savedCities = [];
+
+    const save = (city) => {
+        savedCities.push(city);
+        localStorage.setItem('savedCities', JSON.stringify(savedCities));
+    }
+
+    const get = () => {
+        if(localStorage.getItem('savedCities') != null) {
+            savedCities = JSON.parse(localStorage.getItem('savedCities')); 
+        }
+    }
+
+    const remove = (index) => {
+        if(index < savedCities.length) {
+            savedCities.splice(index, 1);
+            localStorage.setItem('savedCities', JSON.stringify(savedCities));
+        } 
+    }
+
+    const getSavedCities = () => savedCities;
+
+    return {
+        save,
+        get,
+        remove,
+        getSavedCities
+    }
+})();
+
+const SAVEDCITIES = (function() {
+    let container = document.querySelector("#saved-cities-wrapper");
+    const drawCity = (city) => {
+        let cityBox = document.createElement('div'),
+            cityWrapper = document.createElement('div'),
+            deleteWrapper = document.createElement('div'),
+            cityTextNode = document.createElement('h1'),
+            deleteBtn = document.createElement('button');
+        cityBox.classList.add('saved-city-box', 'flex-container');
+        cityTextNode.innerHTML = city;
+        cityTextNode.classList.add('set-city');
+        cityWrapper.classList.add('ripple', 'set-city');
+        cityWrapper.append(cityTextNode);
+        cityBox.append(cityWrapper);
+        deleteBtn.classList.add('ripple', 'remove-saved-city');
+        deleteBtn.innerHTML = '-';
+        deleteWrapper.append(deleteBtn);
+        cityBox.append(deleteWrapper);
+
+        container.append(cityBox);
+    };
+    const _deleteCity = (cityHTMLBtn) => {
+        let nodes = Array.prototype.slice.call(container.children),
+            cityWrapper = cityHTMLBtn.closest('.saved-city-box'),
+            cityIndex = nodes.indexOf(cityWrapper);
+        LOCALSTORAGE.remove(cityIndex);
+        cityWrapper.remove();
+    }
+
+    document.addEventListener('click', function(event) {
+        if(event.target.classList.contains('remove-saved-city')) {
+            _deleteCity(event.target);
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if(event.target.classList.contains('set-city')) {
+            let nodes = Array.prototype.slice.call(container.children),
+                cityWrapper = event.target.closest('.saved-city-box'),
+                cityIndex = nodes.indexOf(cityWrapper),
+                savedCities = LOCALSTORAGE.getSavedCities();
+            WEATHER.getWeather(savedCities[cityIndex], false);
+        }
+    });
+    return {
+        drawCity
+    }
+})();
+
+const GETLOCATION = (function () {
     let location;
     const locationInput = document.querySelector("#location-input"),
         addCityBtn = document.querySelector("#add-city-btn");
@@ -119,7 +206,7 @@ const GETLOCATION = (function (){
         locationInput.value = "";
         addCityBtn.setAttribute('disabled', 'true');
         addCityBtn.classList.add('disabled');
-        WEATHER.getWeather(location);
+        WEATHER.getWeather(location, true);
     }
     locationInput.addEventListener('input', function() {
         let inputText = this.value.trim();
@@ -129,7 +216,7 @@ const GETLOCATION = (function (){
         }
         else {
             addCityBtn.setAttribute('disabled', 'true');
-            addCityBtn.className.add('disabled');
+            addCityBtn.classList.add('disabled');
         }
     }) 
     addCityBtn.addEventListener('click', _addCity);
@@ -151,11 +238,23 @@ const WEATHER = (function() {
         })
     };
 
-    const getWeather = (location) => {
+    const getWeather = (location, save) => {
         UI.loadApp();
         let geocodeURL = _getGeocodeURL(location);
         axios.get(geocodeURL)
         .then((res)=> {
+            console.log(res);
+            if(res.data.results.length == 0) {
+                console.error("Invalid Location");
+                UI.showApp();
+                UI.noCityFoundAlert();
+                return;
+            }
+            if(save) {
+                LOCALSTORAGE.save(location);
+                SAVEDCITIES.drawCity(location);
+            }
+
             let lat = res.data.results[0].geometry.lat,
                 lng = res.data.results[0].geometry.lng
             let darkSkyURL = _getDarkSkyURL(lat, lng);
@@ -171,5 +270,11 @@ const WEATHER = (function() {
 })();
 
 window.onload = function() {
-    UI.showApp();
+    LOCALSTORAGE.get();
+    let cities = LOCALSTORAGE.getSavedCities();
+    if(cities.length != 0) {
+        cities.forEach((city) => SAVEDCITIES.drawCity(city));
+        WEATHER.getWeather(cities[cities.length - 1], false)
+    }
+    else UI.showApp();
 }
