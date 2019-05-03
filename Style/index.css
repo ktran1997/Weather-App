@@ -413,3 +413,41 @@ button {
 	border: 2px solid #EE5263;
 	border-radius: 100%;
 }
+
+.set-city {
+	cursor: pointer;
+}
+
+::-webkit-scrollbar {
+	display: none;
+}
+
+@media only screen and (min-width: 800px) {
+	#menu-container {
+		width: 40%;
+	}
+}
+
+@media only screen and (min-width: 1200px) {
+	#menu-container {
+		width: 30%;
+	}
+}
+
+.alert-box {
+	position: fixed;
+	z-index: 5;
+	bottom: -50px;
+	height: 50px;
+	transition: .5s bottom;
+}
+
+.alert-red {
+	border: 2px solid #EE5253;
+	padding: 10px 15px;
+	white-space: nowrap;
+	border-radius: 20px;
+	color: #EE5253;
+	font-size: 18px;
+	letter-spacing: 1.1px;
+}
